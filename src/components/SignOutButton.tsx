@@ -6,9 +6,9 @@ import { signOut } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
 import { LogOut } from 'lucide-react';
 
-interface SighOutButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
+interface SignOutButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
 
-const SighOutButton: FC<SighOutButtonProps> = ({ ...props }) => {
+const SignOutButton: FC<SignOutButtonProps> = ({ ...props }) => {
     const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
     return (
@@ -32,4 +32,4 @@ const SighOutButton: FC<SighOutButtonProps> = ({ ...props }) => {
     );
 };
 
-export default SighOutButton;
+export default SignOutButton;

@@ -37,7 +37,7 @@ const Messages: FC<MessagesProps> = ({ initialMessages, sessionId, sessionImg, c
 
             pusherClient.unbind('incoming_message', messageHandler);
         };
-    }, [sessionId]);
+    }, [chatId]);
 
     return (
         <div
