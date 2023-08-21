@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { pusherServer } from '@/lib/pusher';
 import { toPusherKey } from '@/lib/utils';
-import { messageValidator } from '@/lib/validations/message';
+import { Message, messageValidator } from '@/lib/validations/message';
 import { nanoid } from 'nanoid';
 import { getServerSession } from 'next-auth';
 
@@ -22,15 +22,15 @@ export async function POST(req: Request) {
 
         const friendId = session.user.id === userId1 ? userId2 : userId1;
 
-        // const friendList = (await fetchRedis('smembers', `user:${session.user.id}:friends`)) as string;
-        // const isfriend = friendList.includes(friendId)
-        const isFriend = (await fetchRedis('sismember', `user:${session.user.id}:friends`, friendId)) as boolean;
+        const friendList = (await fetchRedis('smembers', `user:${session.user.id}:friends`)) as string[];
+        const isFriend = friendList.includes(friendId);
+
         if (!isFriend) {
             return new Response('Unauthorized', { status: 401 });
         }
 
-        const senderNotParsed = (await fetchRedis('get', `user:${session.user.id}`)) as string;
-        const sender = (await JSON.parse(senderNotParsed)) as User;
+        const rawSender = (await fetchRedis('get', `user:${session.user.id}`)) as string;
+        const sender = JSON.parse(rawSender) as User;
 
         const timestamp = Date.now();
 
@@ -43,23 +43,27 @@ export async function POST(req: Request) {
 
         const message = messageValidator.parse(messageData);
 
-        pusherServer.trigger(toPusherKey(`chat:${chatId}`), 'incoming_message', message);
+        // notify all connected chat room clients
+        await pusherServer.trigger(toPusherKey(`chat:${chatId}`), 'incoming-message', message);
 
-        pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), 'new_message', {
+        await pusherServer.trigger(toPusherKey(`user:${friendId}:chats`), 'new_message', {
             ...message,
             senderImg: sender.image,
             senderName: sender.name,
         });
 
+        // all valid, send the message
         await db.zadd(`chat:${chatId}:messages`, {
             score: timestamp,
             member: JSON.stringify(message),
         });
+
         return new Response('OK');
     } catch (error) {
         if (error instanceof Error) {
             return new Response(error.message, { status: 500 });
         }
+
         return new Response('Internal Server Error', { status: 500 });
     }
 }
