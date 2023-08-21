@@ -19,10 +19,10 @@ interface ExtendedMessage extends Message {
 const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
     const pathname = usePathname();
     const [unseenMessages, setUnseenMessages] = useState<Message[]>([]);
-    const router = useRouter();
+    const [currentFriends, setCurrentFriends] = useState<User[]>(friends);
     useEffect(() => {
         pusherClient.subscribe(toPusherKey(`user:${sessionId}:chats`));
-        // pusherClient.subscribe(toPusherKey(`user:${sessionId}:friends`));
+        pusherClient.subscribe(toPusherKey(`user:${sessionId}:friends`));
 
         const chatHandler = (message: ExtendedMessage) => {
             const shouldNotify = pathname !== `/dashboard/chat/${chatHrefConstructor(sessionId, message.senderId)}`;
@@ -43,19 +43,21 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
             setUnseenMessages((prev) => [...prev, message]);
         };
 
-        // const friendHandler = () => {
-        //     router.refresh();
-        // };
+        const friendHandler = (friend: User) => {
+            if (friend.name) {
+                setCurrentFriends((prev) => [...prev, friend]);
+            }
+        };
 
         pusherClient.bind('new_message', chatHandler);
-        // pusherClient.bind('new_friend', friendHandler);
+        pusherClient.bind('new_friend', friendHandler);
         return () => {
             pusherClient.unbind('new_message', chatHandler);
-            // pusherClient.unbind('new_friend', friendHandler);
+            pusherClient.unbind('new_friend', friendHandler);
             pusherClient.unsubscribe(toPusherKey(`user:${sessionId}:chats`));
-            // pusherClient.unsubscribe(toPusherKey(`user:${sessionId}:friends`));
+            pusherClient.unsubscribe(toPusherKey(`user:${sessionId}:friends`));
         };
-    }, [pathname, sessionId, router]);
+    }, [pathname, sessionId]);
 
     useEffect(() => {
         if (pathname?.includes('chat')) {
@@ -72,7 +74,7 @@ const SidebarChatList: FC<SidebarChatListProps> = ({ friends, sessionId }) => {
             role='list'
             className='-mx-2 max-h-[25rem] space-y-1 overflow-y-auto'
         >
-            {friends.sort().map((friend) => {
+            {currentFriends.sort().map((friend) => {
                 const friendId = friend.id;
                 // const { id: friendId } = friend;
                 const unseenMessagesCount = unseenMessages.filter((unseenMsg) => {

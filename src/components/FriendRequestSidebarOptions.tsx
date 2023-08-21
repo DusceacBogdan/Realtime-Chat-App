@@ -16,7 +16,6 @@ const FriendRequestSidebarOptions: FC<FriendRequestSidebarOptionsProps> = ({
     sessionId,
     initialUnseenRequestCount,
 }) => {
-    const router = useRouter();
     const [unseenRequestCount, setUnseenRequestCount] = useState<number>(initialUnseenRequestCount);
     useEffect(() => {
         pusherClient.subscribe(toPusherKey(`user:${sessionId}:incoming_friend_requests`));
@@ -28,7 +27,6 @@ const FriendRequestSidebarOptions: FC<FriendRequestSidebarOptionsProps> = ({
 
         const friendHandler = () => {
             setUnseenRequestCount((prev) => (prev > 0 ? prev - 1 : 0));
-            router.refresh();
         };
 
         pusherClient.bind('incoming_friend_requests', friendRequestHandler);
@@ -41,7 +39,7 @@ const FriendRequestSidebarOptions: FC<FriendRequestSidebarOptionsProps> = ({
             pusherClient.unbind('new_friend', friendHandler);
             pusherClient.unbind('incoming_friend_requests', friendRequestHandler);
         };
-    }, [sessionId, router]);
+    }, [sessionId]);
 
     return (
         <Link
