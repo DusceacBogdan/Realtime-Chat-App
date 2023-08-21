@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
         const { id: idToDeny } = z.object({ id: z.string() }).parse(body);
 
-        pusherServer.trigger(toPusherKey(`user:${session.user.id}:incoming_friend_requests`), 'new_friend', {});
+        await pusherServer.trigger(toPusherKey(`user:${session.user.id}:incoming_friend_requests`), 'new_friend', {});
 
         await db.srem(`user:${session.user.id}:incoming_friend_requests`, idToDeny);
 
