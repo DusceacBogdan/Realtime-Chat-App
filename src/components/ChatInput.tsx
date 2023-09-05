@@ -17,12 +17,12 @@ const ChatInput: FC<ChatInputProps> = ({ chatPartner, chatId }) => {
     const [input, setInput] = useState<string>('');
 
     const sendMessage = async () => {
-        if (!input) return;
+        if (input.match(/^ *$/)) return;
         setIsLoading(true);
 
         try {
-            await axios.post('/api/message/send', { text: input, chatId });
             setInput('');
+            await axios.post('/api/message/send', { text: input, chatId });
             textareaRef.current?.focus();
         } catch {
             toast.error('Something went wrong. Please try again later.');
@@ -39,7 +39,7 @@ const ChatInput: FC<ChatInputProps> = ({ chatPartner, chatId }) => {
                     onKeyDown={(event) => {
                         if (event.key === 'Enter' && !event.shiftKey) {
                             event.preventDefault();
-                            sendMessage();
+                            if (!isLoading) sendMessage();
                         }
                     }}
                     rows={1}
